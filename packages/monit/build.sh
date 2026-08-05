@@ -8,7 +8,7 @@ TERMUX_PKG_SHA256=SKIP_CHECKSUM
 TERMUX_PKG_DEPENDS="libandroid-support, zlib, openssl"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --without-pam
---with-ssl
+--with-ssl=enabled
 --with-ssl-dir=$TERMUX_PREFIX
 --with-ssl-incl-dir=$TERMUX_PREFIX/include
 --with-ssl-lib-dir=$TERMUX_PREFIX/lib
@@ -16,17 +16,14 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 "
 
 termux_step_pre_configure() {
-	# Clean dynamic patch for Bionic getdtablesize() compatibility
+	# Dinamikus patch a getdtablesize() helyettesítésére Android Bionic alatt
 	sed -i 's/fileDescriptors = getdtablesize();/fileDescriptors = sysconf(_SC_OPEN_MAX);/g' libmonit/src/system/System.c
 
-	# Explicitly pass OpenSSL flags to prevent configure detection bypasses
 	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
 	export LDFLAGS="-L$TERMUX_PREFIX/lib $LDFLAGS"
-	export SSL_CFLAGS="-I$TERMUX_PREFIX/include"
-	export SSL_LIBS="-L$TERMUX_PREFIX/lib -lssl -lcrypto"
+	export LIBS="-lssl -lcrypto"
 
-	# Put main src/ directory first so Ssl.h and local headers are found immediately
-	export CFLAGS="$CFLAGS -I$TERMUX_PKG_SRCDIR/src -I$TERMUX_PKG_BUILDDIR -I$TERMUX_PKG_BUILDDIR/src \
+	export CFLAGS="$CFLAGS -DHAVE_SSL=1 -I$TERMUX_PKG_SRCDIR/src -I$TERMUX_PKG_BUILDDIR -I$TERMUX_PKG_BUILDDIR/src \
 -I$TERMUX_PKG_SRCDIR/src/device -I$TERMUX_PKG_SRCDIR/src/protocols \
 -I$TERMUX_PKG_SRCDIR/libmonit/src -I$TERMUX_PKG_BUILDDIR/libmonit/src \
 -I$TERMUX_PKG_SRCDIR/libmonit/src/exceptions -I$TERMUX_PKG_SRCDIR/libmonit/src/io \
@@ -40,4 +37,34 @@ termux_step_configure() {
 		--prefix=$TERMUX_PREFIX \
 		--sysconfdir=$TERMUX_PREFIX/etc \
 		$TERMUX_PKG_EXTRA_CONFIGURE_ARGS 2> >(grep -v "tput: unknown terminfo capability" >&2)
+
+	# Force HAVE_SSL in all generated libmonit/monit config headers post-configure
+	for cfg in $(find . -name "config.h" -o -name "Config.h" -o -name "libmonit.h"); do
+		if [ -f "$cfg" ]; then
+			sed -i 's/#undef HAVE_SSL/#define HAVE_SSL 1/g' "$cfg"
+			sed -i 's/#define HAVE_SSL 0/#define HAVE_SSL 1/g' "$cfg"
+			echo "#ifndef HAVE_SSL" >> "$cfg"
+			echo "#define HAVE_SSL 1" >> "$cfg"
+			echo "#endif" >> "$cfg"
+		fi
+	done
+
+	mkdir -p src
+	if [ -f "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" ]; then
+		ln -sf "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" src/ssl.h
+		ln -sf "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" src/Ssl.h
+	elif [ -f "$TERMUX_PKG_SRCDIR/src/ssl.h" ]; then
+		ln -sf "$TERMUX_PKG_SRCDIR/src/ssl.h" src/ssl.h
+		ln -sf "$TERMUX_PKG_SRCDIR/src/ssl.h" src/Ssl.h
+	else
+		touch src/Ssl.h
+	fi
+
+	if [ ! -f "src/Address.h" ]; then
+		if [ -f "$TERMUX_PKG_SRCDIR/src/Address.h" ]; then
+			ln -sf "$TERMUX_PKG_SRCDIR/src/Address.h" src/Address.h
+		else
+			touch src/Address.h
+		fi
+	fi
 }
