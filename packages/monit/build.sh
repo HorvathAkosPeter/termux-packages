@@ -16,18 +16,23 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 "
 
 termux_step_pre_configure() {
-	# Dinamikus patch a getdtablesize() helyettesítésére Android Bionic alatt
+	# Fix getdtablesize() for Android Bionic
 	sed -i 's/fileDescriptors = getdtablesize();/fileDescriptors = sysconf(_SC_OPEN_MAX);/g' libmonit/src/system/System.c
 
-	if [ -f "libmonit/src/net/socket.h" ]; then
-		sed -i '/#include "net.h"/a #include "ssl.h"' libmonit/src/net/socket.h
-	fi
+	# Ensure the build directory's src structure exists and create Ssl.h there for out-of-tree builds
+	mkdir -p "$TERMUX_PKG_BUILDDIR/src"
+	cat << 'EOF' > "$TERMUX_PKG_BUILDDIR/src/Ssl.h"
+#ifndef _MONIT_SSL_H
+#define _MONIT_SSL_H
+#include "net/ssl.h"
+#endif
+EOF
 
 	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
 	export LDFLAGS="-L$TERMUX_PREFIX/lib $LDFLAGS"
 	export LIBS="-lssl -lcrypto"
 
-	export CFLAGS="$CFLAGS -DHAVE_SSL=1 -I$TERMUX_PKG_SRCDIR/src -I$TERMUX_PKG_BUILDDIR -I$TERMUX_PKG_BUILDDIR/src \
+	export CFLAGS="$CFLAGS -I$TERMUX_PKG_SRCDIR/src -I$TERMUX_PKG_BUILDDIR -I$TERMUX_PKG_BUILDDIR/src \
 -I$TERMUX_PKG_SRCDIR/src/device -I$TERMUX_PKG_SRCDIR/src/protocols \
 -I$TERMUX_PKG_SRCDIR/libmonit/src -I$TERMUX_PKG_BUILDDIR/libmonit/src \
 -I$TERMUX_PKG_SRCDIR/libmonit/src/exceptions -I$TERMUX_PKG_SRCDIR/libmonit/src/io \
@@ -42,31 +47,11 @@ termux_step_configure() {
 		--sysconfdir=$TERMUX_PREFIX/etc \
 		$TERMUX_PKG_EXTRA_CONFIGURE_ARGS 2> >(grep -v "tput: unknown terminfo capability" >&2)
 
-	# Force HAVE_SSL in config headers
+	# Ensure HAVE_SSL is strictly enabled across all generated configurations
 	for cfg in $(find . -name "config.h" -o -name "Config.h" -o -name "libmonit.h"); do
 		if [ -f "$cfg" ]; then
 			sed -i 's/#undef HAVE_SSL/#define HAVE_SSL 1/g' "$cfg"
 			sed -i 's/#define HAVE_SSL 0/#define HAVE_SSL 1/g' "$cfg"
-		fi
-	done
-
-	# Létrehozzuk a src mappákat mind a source, mind a build fán belül, és elhelyezzük a Ssl.h / Address.h fájlokat
-	for target_dir in "src" "$TERMUX_PKG_SRCDIR/src" "$TERMUX_PKG_BUILDDIR/src"; do
-		mkdir -p "$target_dir"
-		if [ -f "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" ]; then
-			cp -f "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" "$target_dir/Ssl.h"
-			cp -f "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" "$target_dir/ssl.h"
-		elif [ -f "$TERMUX_PKG_SRCDIR/src/ssl.h" ]; then
-			cp -f "$TERMUX_PKG_SRCDIR/src/ssl.h" "$target_dir/Ssl.h"
-			cp -f "$TERMUX_PKG_SRCDIR/src/ssl.h" "$target_dir/ssl.h"
-		else
-			touch "$target_dir/Ssl.h"
-		fi
-
-		if [ -f "$TERMUX_PKG_SRCDIR/src/Address.h" ]; then
-			cp -f "$TERMUX_PKG_SRCDIR/src/Address.h" "$target_dir/Address.h"
-		else
-			touch "$target_dir/Address.h"
 		fi
 	done
 }
