@@ -17,9 +17,6 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 "
 
 termux_step_pre_configure() {
-	# Fix getdtablesize() for Android Bionic
-	sed -i 's/fileDescriptors = getdtablesize();/fileDescriptors = sysconf(_SC_OPEN_MAX);/g' libmonit/src/system/System.c
-
 	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
 	export LDFLAGS="-L$TERMUX_PREFIX/lib $LDFLAGS"
 	export LIBS="-lssl -lcrypto"

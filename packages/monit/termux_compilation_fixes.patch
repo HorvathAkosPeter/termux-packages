@@ -1,0 +1,24 @@
+--- monit-5.33.0/libmonit/src/system/System.c
++++ monit-5.33.0/libmonit/src/system/System.c
+@@ -XXX,XX +XXX,XX @@
+     // Instead of getdtablesize(), use sysconf(_SC_OPEN_MAX) safely directly on Android
+     long fileDescriptors = sysconf(_SC_OPEN_MAX);
+-    if (fileDescriptors == -1) {
+-        fileDescriptors = getdtablesize();
+-    }
+     if (fileDescriptors == -1) {
+         fileDescriptors = 1024; // Safe fallback
+--- monit-5.33.0/src/process/sysdep_LINUX.c
++++ monit-5.33.0/src/process/sysdep_LINUX.c
+@@ -35,6 +35,11 @@
+ #include "monit.h"
+ #include "process.h"
+ 
++/* Android Bionic does not provide getloadavg() */
++static inline int getloadavg(double *loadavg, int nelem) {
++    return -1;
++}
++
+ // TODO: Implement Linux system dependent process functions
+ 
+ static int getloadavg_(double *loadv, int nelem) {
