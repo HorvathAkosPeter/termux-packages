@@ -2,15 +2,19 @@
 
 PACKAGES=""
 # Tier 1: requirements for the core build scripts in scripts/build/.
-PACKAGES+=" clang"				# Required for termux-elf-cleaner and C/C++ packages.
-PACKAGES+=" file"				# Used in termux_step_massage().
-PACKAGES+=" gnupg"				# Used in termux_get_repo_files() and build-package.sh.
-PACKAGES+=" lzip"				# Used by tar to extract *.tar.lz source archives.
-PACKAGES+=" patch"				# Used for applying patches on source code.
-PACKAGES+=" python"				# Used buildorder.py core script.
-PACKAGES+=" python-pip" # Necessary to install 'itstool' for on-device-building (since Ubuntu gets it from 'apt')
-PACKAGES+=" unzip"				# Used to extract *.zip source archives.
-PACKAGES+=" jq"					# Used for parsing repo.json.
+PACKAGES_1+=" clang"				# Required for termux-elf-cleaner and C/C++ packages.
+PACKAGES_1+=" file"				# Used in termux_step_massage().
+PACKAGES_1+=" gnupg"				# Used in termux_get_repo_files() and build-package.sh.
+PACKAGES_1+=" lzip"				# Used by tar to extract *.tar.lz source archives.
+PACKAGES_1+=" patch"				# Used for applying patches on source code.
+PACKAGES_1+=" python"				# Used buildorder.py core script.
+PACKAGES_1+=" python-pip" # Necessary to install 'itstool' for on-device-building (since Ubuntu gets it from 'apt')
+PACKAGES_1+=" unzip"				# Used to extract *.zip source archives.
+PACKAGES_1+=" jq"					# Used for parsing repo.json.
+PACKAGES_1+=" libxml2"
+PACKAGES_1+=" libxslt"
+PACKAGES_1+=" expat"
+PACKAGES_1+=" build-essential"
 
 # Tier 2: requirements for building many other packages.
 PACKAGES+=" asciidoc"
@@ -72,8 +76,10 @@ source "$TERMUX_PREFIX/bin/termux-setup-package-manager" || true
 if [ "$TERMUX_APP_PACKAGE_MANAGER" = "apt" ]; then
 	apt update
 	yes | apt dist-upgrade
+	yes | apt install $PACKAGES_1
 	yes | apt install $PACKAGES
 elif [ "$TERMUX_APP_PACKAGE_MANAGER" = "pacman" ]; then
+	pacman -Syu $PACKAGES_1 --needed --noconfirm
 	pacman -Syu $PACKAGES --needed --noconfirm
 else
 	echo "Error: no package manager defined"
@@ -84,4 +90,4 @@ fi
 # particular python packages are installed system-wide,
 # so should be installed Termux-wide for on-device building to be reasonably accurate
 # compared with the behavior of the Ubuntu cross-builder image.
-pip install --upgrade $PYTHON_PACKAGES
+pip install --user --upgrade $PYTHON_PACKAGES
