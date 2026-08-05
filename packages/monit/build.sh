@@ -19,6 +19,11 @@ termux_step_pre_configure() {
 	# Dinamikus patch a getdtablesize() helyettesítésére Android Bionic alatt
 	sed -i 's/fileDescriptors = getdtablesize();/fileDescriptors = sysconf(_SC_OPEN_MAX);/g' libmonit/src/system/System.c
 
+	# Biztosítjuk, hogy a socket.h betöltse az ssl.h-t, vagy definíciót kapjon
+	if [ -f "libmonit/src/net/socket.h" ]; then
+		sed -i '/#include "net.h"/a #include "ssl.h"' libmonit/src/net/socket.h
+	fi
+
 	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
 	export LDFLAGS="-L$TERMUX_PREFIX/lib $LDFLAGS"
 	export LIBS="-lssl -lcrypto"
@@ -38,26 +43,21 @@ termux_step_configure() {
 		--sysconfdir=$TERMUX_PREFIX/etc \
 		$TERMUX_PKG_EXTRA_CONFIGURE_ARGS 2> >(grep -v "tput: unknown terminfo capability" >&2)
 
-	# Force HAVE_SSL in all generated libmonit/monit config headers post-configure
+	# Force HAVE_SSL in all config headers
 	for cfg in $(find . -name "config.h" -o -name "Config.h" -o -name "libmonit.h"); do
 		if [ -f "$cfg" ]; then
 			sed -i 's/#undef HAVE_SSL/#define HAVE_SSL 1/g' "$cfg"
 			sed -i 's/#define HAVE_SSL 0/#define HAVE_SSL 1/g' "$cfg"
-			echo "#ifndef HAVE_SSL" >> "$cfg"
-			echo "#define HAVE_SSL 1" >> "$cfg"
-			echo "#endif" >> "$cfg"
 		fi
 	done
 
-	mkdir -p src
+	mkdir -p src libmonit/src/net
+
+	# Másoljuk/szimlinkeljük az ssl.h-t minden lehetséges helyre, ahonnan a fordító kérheti
 	if [ -f "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" ]; then
 		ln -sf "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" src/ssl.h
 		ln -sf "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" src/Ssl.h
-	elif [ -f "$TERMUX_PKG_SRCDIR/src/ssl.h" ]; then
-		ln -sf "$TERMUX_PKG_SRCDIR/src/ssl.h" src/ssl.h
-		ln -sf "$TERMUX_PKG_SRCDIR/src/ssl.h" src/Ssl.h
-	else
-		touch src/Ssl.h
+		ln -sf "$TERMUX_PKG_SRCDIR/libmonit/src/net/ssl.h" libmonit/src/net/ssl.h
 	fi
 
 	if [ ! -f "src/Address.h" ]; then
