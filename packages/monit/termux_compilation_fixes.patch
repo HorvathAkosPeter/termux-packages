@@ -1,0 +1,27 @@
+diff -urNw a/libmonit/src/system/System.c b/libmonit/src/system/System.c
+--- a/libmonit/src/system/System.c    2023-02-11 11:28:19.000000000 +0100
++++ b/libmonit/src/system/System.c 2026-08-05 18:53:06.063129034 +0200
+@@ -98,8 +98,6 @@
+ int System_getDescriptorsGuarded() {
+         int max = 2<<15;
+         int fileDescriptors = (int)sysconf(_SC_OPEN_MAX);
+-        if (fileDescriptors < 2)
+-                fileDescriptors = getdtablesize();
+         assert(fileDescriptors > 2);
+         return (fileDescriptors > max) ? max : fileDescriptors;
+ }
+diff -urNw a/src/process/sysdep_LINUX.c b/src/process/sysdep_LINUX.c
+--- a/src/process/sysdep_LINUX.c      2023-02-11 11:28:19.000000000 +0100
++++ b/src/process/sysdep_LINUX.c   2026-08-05 18:53:30.487129017 +0200
+@@ -92,6 +92,11 @@
+ // libmonit
+ #include "system/Time.h"
+
++/* Android Bionic does not provide getloadavg() */
++static inline int getloadavg(double *loadavg, int nelem) {
++    return -1;
++}
++
+ /**
+  *  System dependent resource data collection code for Linux.
+  *
