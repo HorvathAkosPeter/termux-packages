@@ -6,7 +6,7 @@ TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="5.33.0"
 TERMUX_PKG_SRCURL=https://mmonit.com/monit/dist/monit-${TERMUX_PKG_VERSION}.tar.gz
 TERMUX_PKG_SHA256=SKIP_CHECKSUM
-TERMUX_PKG_DEPENDS="libandroid-support, zlib, openssl"
+TERMUX_PKG_DEPENDS="libandroid-glob, libandroid-support, zlib, openssl, libcrypt"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --without-pam
@@ -15,7 +15,9 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --with-ssl-incl-dir=$TERMUX_PREFIX/include
 --with-ssl-lib-dir=$TERMUX_PREFIX/lib
 --enable-optimized
+LIBS=-landroid-glob
 "
+TERMUX_PKG_EXTRA_LDFLAGS="-L$TERMUX_PREFIX/lib"
 
 termux_step_pre_configure() {
 	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
