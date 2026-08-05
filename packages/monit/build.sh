@@ -1,6 +1,7 @@
 TERMUX_PKG_HOMEPAGE=https://mmonit.com/monit/
 TERMUX_PKG_DESCRIPTION="Utility for managing and monitoring processes, programs, files, directories and filesystems"
 TERMUX_PKG_LICENSE="AGPL-3.0"
+TERMUX_PKG_LICENSE_FILE="COPYING"
 TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="5.33.0"
 TERMUX_PKG_SRCURL=https://mmonit.com/monit/dist/monit-${TERMUX_PKG_VERSION}.tar.gz
