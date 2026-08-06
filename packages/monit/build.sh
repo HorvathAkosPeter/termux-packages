@@ -17,11 +17,8 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --enable-optimized
 LIBS=-landroid-glob
 "
-TERMUX_PKG_EXTRA_LDFLAGS="-L$TERMUX_PREFIX/lib"
 
 termux_step_pre_configure() {
-	export CPPFLAGS="-I$TERMUX_PREFIX/include $CPPFLAGS"
-	export LDFLAGS="-L$TERMUX_PREFIX/lib $LDFLAGS"
 	export LIBS="-lssl -lcrypto"
 }
 
