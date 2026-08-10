@@ -1,6 +1,6 @@
 diff -urNw a/config/ax_info.m4 b/config/ax_info.m4
 --- a/config/ax_info.m4	2026-06-15 10:40:52.000000000 +0200
-+++ b/config/ax_info.m4	2026-08-06 01:46:43.072751484 +0200
++++ b/config/ax_info.m4	2026-08-10 10:06:39.652545283 +0200
 @@ -47,18 +47,16 @@
  
  AC_DEFUN([AX_INFO_ENABLED],
@@ -30,7 +30,7 @@ diff -urNw a/config/ax_info.m4 b/config/ax_info.m4
 -
 diff -urNw a/libmonit/src/system/Command.c b/libmonit/src/system/Command.c
 --- a/libmonit/src/system/Command.c	2026-06-15 10:40:52.000000000 +0200
-+++ b/libmonit/src/system/Command.c	2026-08-06 02:04:09.852526445 +0200
++++ b/libmonit/src/system/Command.c	2026-08-10 10:06:39.656545219 +0200
 @@ -53,6 +53,10 @@
  #include "system/Time.h"
  #include "system/Command.h"
@@ -53,7 +53,7 @@ diff -urNw a/libmonit/src/system/Command.c b/libmonit/src/system/Command.c
  
 diff -urNw a/libmonit/src/system/System.c b/libmonit/src/system/System.c
 --- a/libmonit/src/system/System.c	2026-06-15 10:40:52.000000000 +0200
-+++ b/libmonit/src/system/System.c	2026-08-06 01:40:49.274224015 +0200
++++ b/libmonit/src/system/System.c	2026-08-10 10:06:39.656545219 +0200
 @@ -108,8 +108,6 @@
  
  int System_descriptors(int guard) {
@@ -65,7 +65,7 @@ diff -urNw a/libmonit/src/system/System.c b/libmonit/src/system/System.c
                  if (fileDescriptors > guard)
 diff -urNw a/monitrc b/monitrc
 --- a/monitrc	2026-06-15 10:40:52.000000000 +0200
-+++ b/monitrc	2026-08-06 13:02:06.871455253 +0200
++++ b/monitrc	2026-08-10 10:06:39.656545219 +0200
 @@ -24,20 +24,21 @@
  ## Set syslog logging. If you want to log to a standalone log file instead,
  ## specify the full path to the log file
@@ -178,9 +178,24 @@ diff -urNw a/monitrc b/monitrc
 -#  include /etc/monit.d/*
 +#  include /data/data/com.termux/files/usr/etc/monit.d/*
  #
+diff -urNw a/src/http/cervlet.c b/src/http/cervlet.c
+--- a/src/http/cervlet.c	2026-06-15 10:40:52.000000000 +0200
++++ b/src/http/cervlet.c	2026-08-10 10:08:12.919062730 +0200
+@@ -875,9 +875,8 @@
+                             "<body><div id='wrap'><div id='main'>" \
+                             "<table id='nav' width='100%%'>"\
+                             "  <tr>"\
+-                            "    <td width='20%%'><a href='.'>Home</a>&nbsp;&gt;&nbsp;<a href='%s'>%s</a></td>"\
+-                            "    <td width='60%%' style='text-align:center;'>Use <a href='https://mmonit.com/'>M/Monit</a> to manage all your Monit instances</td>"\
+-                            "    <td width='20%%'><p class='right'><a href='_about'>Monit %s</a></td>"\
++                            "    <td><a href='.'>Home</a>&nbsp;&gt;&nbsp;<a href='%s'>%s</a></td>"\
++                            "    <td><p class='right'><a href='_about'>Monit %s</a></td>"\
+                             "  </tr>"\
+                             "</table>"\
+                             "<center>",
 diff -urNw a/src/process/sysdep_LINUX.c b/src/process/sysdep_LINUX.c
 --- a/src/process/sysdep_LINUX.c	2026-06-15 10:40:52.000000000 +0200
-+++ b/src/process/sysdep_LINUX.c	2026-08-06 01:45:17.678073775 +0200
++++ b/src/process/sysdep_LINUX.c	2026-08-10 10:06:39.660545155 +0200
 @@ -98,6 +98,48 @@
  #include "system/Time.h"
  #include "io/File.h"
